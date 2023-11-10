@@ -127,6 +127,5 @@ func solution(filename string) int {
 }
 
 func main() {
-	// fmt.Println(solution("./example.txt"))
 	fmt.Println(solution("./input.txt"))
 }
