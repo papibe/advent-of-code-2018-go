@@ -77,12 +77,6 @@ func solution(filename string) int {
 					intersection = true
 					break main_loop
 				}
-				// value, ok := fabric_cuts[key]
-				// if ok {
-				// 	fabric_cuts[key] = value + 1
-				// } else {
-				// 	fabric_cuts[key] = 1
-				// }
 			}
 		}
 		if !intersection {
@@ -93,6 +87,5 @@ func solution(filename string) int {
 }
 
 func main() {
-	fmt.Println(solution("./example.txt")) // 3
-	fmt.Println(solution("./input.txt"))   // 445
+	fmt.Println(solution("./input.txt")) // 445
 }
