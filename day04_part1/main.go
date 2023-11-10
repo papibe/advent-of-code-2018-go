@@ -18,15 +18,10 @@ const (
 )
 
 type LogEntry struct {
-	date  string
-	kind  entryType
-	guard string
+	date     int
+	kind     entryType
+	guard_id int
 }
-
-// type GuardEntries struct {
-// 	name       string
-// 	sleep_mins [60]int
-// }
 
 func parse(filename string) []LogEntry {
 	data, err := os.ReadFile(filename)
@@ -39,109 +34,74 @@ func parse(filename string) []LogEntry {
 	re_main := regexp.MustCompile(`\[(\d\d\d\d)-(\d\d)-(\d\d) (\d\d):(\d\d)\] (.*)$`)
 	re_msg := regexp.MustCompile(`Guard #(\d+) begins shift`)
 
-	entries := []LogEntry{}
+	log_entries := []LogEntry{}
 
 	for _, line := range strings.Split(strings.Trim(content, "\n"), "\n") {
 		matches := re_main.FindStringSubmatch(line)
 
-		// year, _ := strconv.Atoi(matches[1])
-		// month, _ := strconv.Atoi(matches[2])
-		month := matches[2]
-		// day, _ := strconv.Atoi(matches[3])
-		day := matches[3]
-		hour := matches[4]
-		minute := matches[5]
+		month, _ := strconv.Atoi(matches[2])
+		day, _ := strconv.Atoi(matches[3])
+		hour, _ := strconv.Atoi(matches[4])
+		minute, _ := strconv.Atoi(matches[5])
 		log_msg := matches[6]
 
 		entry := Starts
-		guard := "N/A"
+		guard := 0 // invalid guard if AFAIK
 
-		// fmt.Println(line)
-		// fmt.Print("\t", year, month, day, hour, minute)
 		if log_msg == "falls asleep" {
 			entry = Falls
-			// fmt.Println("\tFalls")
 		} else if log_msg == "wakes up" {
 			entry = Wakes
-			// fmt.Println("\tWakes")
 		} else {
 			match := re_msg.FindStringSubmatch(log_msg)
-			// guard, _ := strconv.Atoi(match[1])
-			guard = match[1]
-			// fmt.Println("\tGuard", guard)
-
+			guard, _ = strconv.Atoi(match[1])
 			entry = Starts
 		}
-		// epoc := month*1000000 + day*1000 + hour*100 + minute
-		entries = append(entries, LogEntry{date: month + day + hour + minute, kind: entry, guard: guard})
+		epoch := month*1000000 + day*10000 + hour*100 + minute // mmddhhmm
+		log_entries = append(log_entries, LogEntry{date: epoch, kind: entry, guard_id: guard})
 	}
 
-	return entries
-
+	return log_entries
 }
 
-func solution(filename string) int {
-	log_entries := parse(filename)
-
-	// fmt.Println(log_entries)
-
-	sort.Slice(log_entries, func(i, j int) bool {
-		return log_entries[i].date < log_entries[j].date
-	})
-	// fmt.Println("================================================")
-	// fmt.Println(log_entries)
-
-	guards_sleep := make(map[string]*[60]int)
-
-	current_guard := ""
-	_ = current_guard
+func strategy1(log_entries []LogEntry) int {
+	guards_sleep := make(map[int]*[60]int)
+	current_guard := 0
 	falls_sleep_time := 0
 
 	for _, entry := range log_entries {
 		switch entry.kind {
 		case Starts:
-			_, ok := guards_sleep[entry.guard]
+			_, ok := guards_sleep[entry.guard_id]
 			if !ok {
-				guards_sleep[entry.guard] = &[60]int{}
+				guards_sleep[entry.guard_id] = &[60]int{}
 			}
-			current_guard = entry.guard
+			current_guard = entry.guard_id
 		case Falls:
-			falls_sleep_time, _ = strconv.Atoi(entry.date)
-			falls_sleep_time %= 100
+			falls_sleep_time = entry.date % 100
 		case Wakes:
-			wakes_up_time, _ := strconv.Atoi(entry.date)
-			wakes_up_time %= 100
-			// fmt.Println(current_guard, falls_sleep_time, wakes_up_time)
+			wakes_up_time := entry.date % 100
 			for minute := falls_sleep_time; minute < wakes_up_time; minute++ {
-				// fmt.Println(current_guard, falls_sleep_time, wakes_up_time, minute)
 				guards_sleep[current_guard][minute] += 1
 			}
-
 		default:
-			panic("blah!")
+			panic("Unknown log entry type")
 
 		}
 	}
 
-	// for k, v := range guards_sleep {
-	// 	fmt.Println(k, v)
-	// }
-
-	sleepier_guard := ""
+	sleepier_guard := 0
 	max_sleep_mins := 0
 	for k, v := range guards_sleep {
-		// fmt.Println("checking guard", k)
 		guard_total_sleep := 0
 		for _, value := range v {
 			guard_total_sleep += value
 		}
-		// fmt.Println(k, guard_total_sleep)
 		if guard_total_sleep > max_sleep_mins {
 			max_sleep_mins = guard_total_sleep
 			sleepier_guard = k
 		}
 	}
-	// fmt.Println("sleepier is", sleepier_guard, "with", max_sleep_mins)
 
 	max_worst_minute := 0
 	max_sleep := 0
@@ -152,27 +112,18 @@ func solution(filename string) int {
 		}
 	}
 
-	guard, _ := strconv.Atoi(sleepier_guard)
-	fmt.Println("Part1: ", guard*max_worst_minute)
+	return sleepier_guard * max_worst_minute
+}
 
-	max_worst_minute = 0
-	max_sleep = 0
-	sleepier_guard = ""
-	for guard, sleep_record := range guards_sleep {
-		for minute, sleep_count := range sleep_record {
-			if sleep_count > max_sleep {
-				max_sleep = sleep_count
-				max_worst_minute = minute
-				sleepier_guard = guard
-			}
-		}
-	}
+func solution(filename string) int {
+	log_entries := parse(filename)
 
-	guard, _ = strconv.Atoi(sleepier_guard)
+	// sort log entries by date
+	sort.Slice(log_entries, func(i, j int) bool {
+		return log_entries[i].date < log_entries[j].date
+	})
 
-	fmt.Println("Part2: ", guard*max_worst_minute)
-
-	return guard * max_worst_minute
+	return strategy1(log_entries)
 }
 
 func main() {
