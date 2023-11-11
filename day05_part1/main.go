@@ -24,53 +24,81 @@ func parse(filename string) string {
 	return strings.Trim(content, "\n")
 }
 
-func reduce(polymer *Node) int {
-	dummy_head := Node{unit: '>', next: polymer}
-	_ = dummy_head
-	current := polymer.next
+func reduce(polymer *Node) bool {
+	current := polymer
+	removed := false
 
 	for current != nil && current.next != nil {
-		// fmt.Print(string(current.unit))
-		previous := current.prev
-		if unicode.ToLower(previous.unit) == unicode.ToLower(current.unit) {
-			fmt.Println(string(previous.unit))
-		}
-		// previous = current.unit
-		current = current.next
-	}
-	fmt.Println()
+		current_char := current.unit
+		next_char := current.next.unit
+		// handle of comples logic
 
-	return 0
+		units_are_same_type := unicode.ToLower(current_char) == unicode.ToLower(next_char)
+		first_unit_low_and_second_upper := unicode.IsLower(current_char) && unicode.IsUpper(next_char)
+		first_unit_upper_and_second_low := unicode.IsUpper(current_char) && unicode.IsLower(next_char)
+		units_are_opposite_polarity := first_unit_low_and_second_upper || first_unit_upper_and_second_low
+
+		if units_are_same_type && units_are_opposite_polarity {
+			// get relevant nodes for removal
+			previous := current.prev
+			next := current.next.next
+
+			// remove both nodes
+			previous.next = next
+			next.prev = previous
+
+			removed = true
+			current = previous
+		} else {
+			current = current.next
+		}
+	}
+
+	return removed
 }
 
 func create_list(polymer string) *Node {
-	current := &Node{unit: '>', next: nil, prev: nil}
-	dummy_head := current
-	previous := current
+	dummy_head := &Node{unit: '>', next: nil, prev: nil}
+	current := dummy_head
 
 	for _, rune := range polymer {
-		node := &Node{unit: rune, next: nil, prev: previous}
+		node := &Node{unit: rune, next: nil, prev: current}
 		current.next = node
-		previous = current
 		current = current.next
 	}
-	// h := dummy_head.next
-	// for h != nil {
-	// 	fmt.Print(string(h.unit))
-	// 	h = h.next
-	// }
-	// fmt.Println()
-	dummy_head.next.prev = nil
-	return dummy_head.next
+	dummy_tail := &Node{unit: '<', next: nil, prev: current}
+	current.next = dummy_tail
+
+	return dummy_head
+}
+
+func polymer_len(polymer *Node) int {
+	length := 0
+	current := polymer
+
+	for current != nil {
+		length += 1
+		current = current.next
+	}
+	return length - 2
+}
+
+func solve(polymer *Node) int {
+
+	removed := reduce(polymer)
+	for removed {
+		removed = reduce(polymer)
+	}
+
+	return polymer_len(polymer)
 }
 
 func solution(filename string) int {
 	polymer := parse(filename)
 	polymer_list := create_list(polymer)
-	return reduce(polymer_list)
+	return solve(polymer_list)
 }
 
 func main() {
-	fmt.Println(solution("./example1.txt"))
-	// fmt.Println(solution("./input.txt"))
+	fmt.Println(solution("./input.txt"))
 }
