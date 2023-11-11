@@ -61,8 +61,8 @@ func create_list(polymer string) *Node {
 	dummy_head := &Node{unit: '>', next: nil, prev: nil}
 	current := dummy_head
 
-	for _, rune := range polymer {
-		node := &Node{unit: rune, next: nil, prev: current}
+	for _, char := range polymer {
+		node := &Node{unit: char, next: nil, prev: current}
 		current.next = node
 		current = current.next
 	}
