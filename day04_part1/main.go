@@ -69,6 +69,7 @@ func strategy1(log_entries []LogEntry) int {
 	current_guard := 0
 	falls_sleep_time := 0
 
+	// aggregate sleep time per guard
 	for _, entry := range log_entries {
 		switch entry.kind {
 		case Starts:
@@ -86,33 +87,34 @@ func strategy1(log_entries []LogEntry) int {
 			}
 		default:
 			panic("Unknown log entry type")
-
 		}
 	}
 
+	// determine sleepier guard
 	sleepier_guard := 0
 	max_sleep_mins := 0
-	for k, v := range guards_sleep {
+	for guard, minutes_asleep := range guards_sleep {
 		guard_total_sleep := 0
-		for _, value := range v {
-			guard_total_sleep += value
+		for _, sleep_count_per_minute := range minutes_asleep {
+			guard_total_sleep += sleep_count_per_minute
 		}
 		if guard_total_sleep > max_sleep_mins {
 			max_sleep_mins = guard_total_sleep
-			sleepier_guard = k
+			sleepier_guard = guard
 		}
 	}
 
-	max_worst_minute := 0
+	// determine minute of most sleep
+	max_sleep_minute := 0
 	max_sleep := 0
 	for minute, sleep_count := range guards_sleep[sleepier_guard] {
 		if sleep_count > max_sleep {
 			max_sleep = sleep_count
-			max_worst_minute = minute
+			max_sleep_minute = minute
 		}
 	}
 
-	return sleepier_guard * max_worst_minute
+	return sleepier_guard * max_sleep_minute
 }
 
 func solution(filename string) int {
