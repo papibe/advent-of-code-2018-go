@@ -91,19 +91,19 @@ func strategy2(log_entries []LogEntry) int {
 	}
 
 	sleepier_guard := 0
-	max_worst_minute := 0
+	max_slept_minute := 0
 	max_sleep := 0
 	for guard, sleep_record := range guards_sleep {
 		for minute, sleep_count := range sleep_record {
 			if sleep_count > max_sleep {
 				max_sleep = sleep_count
-				max_worst_minute = minute
+				max_slept_minute = minute
 				sleepier_guard = guard
 			}
 		}
 	}
 
-	return sleepier_guard * max_worst_minute
+	return sleepier_guard * max_slept_minute
 }
 
 func solution(filename string) int {
