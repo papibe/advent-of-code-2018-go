@@ -31,8 +31,8 @@ func reduce(polymer *Node) bool {
 	for current != nil && current.next != nil {
 		current_char := current.unit
 		next_char := current.next.unit
-		// handle of comples logic
 
+		// split complex logic is smaller boolean expressions
 		units_are_same_type := unicode.ToLower(current_char) == unicode.ToLower(next_char)
 		first_unit_low_and_second_upper := unicode.IsLower(current_char) && unicode.IsUpper(next_char)
 		first_unit_upper_and_second_low := unicode.IsUpper(current_char) && unicode.IsLower(next_char)
