@@ -19,7 +19,6 @@ type manhattan struct {
 type bfs_node struct {
 	row int
 	col int
-	// count int
 }
 
 func parse(filename string) [][]int {
@@ -35,7 +34,6 @@ func parse(filename string) [][]int {
 		col, _ := strconv.Atoi(strings.Trim(fields[0], " "))
 		row, _ := strconv.Atoi(strings.Trim(fields[1], " "))
 		coordinates = append(coordinates, []int{row, col})
-		// fmt.Printf("x: %v, y: %v\n", x, y)
 	}
 	return coordinates
 }
@@ -60,22 +58,16 @@ func calculate_area(board [][]manhattan, row int, col int) int {
 		return 0
 	}
 	q := []bfs_node{bfs_node{row: row, col: col}}
-	// queue = append(queue, bfs_node{row: row, col: col, count: 1})
 	visited := make(map[bfs_node]bool)
 	visited[bfs_node{row: row, col: col}] = true
 	node := bfs_node{}
-	// _ = node
 
 	steps := [][]int{{-1, -1}, {-1, 0}, {-1, 1}, {0, -1}, {0, 1}, {1, -1}, {1, 0}, {1, 1}}
-	// _ = steps
 
 	is_infinite := false
 	area := 0
-	// outer:
 	for len(q) > 0 {
 		node, q = q[len(q)-1], q[:len(q)-1]
-		// fmt.Println(node.row, node.col)
-		// area = max(area, node.count)
 		board[node.row][node.col].coord = VISITED
 		area += 1
 		for _, step := range steps {
@@ -85,8 +77,6 @@ func calculate_area(board [][]manhattan, row int, col int) int {
 			if !(0 <= new_row && new_row < len(board) && 0 <= new_col && new_col < len(board[0])) {
 				is_infinite = true
 				continue
-				// fmt.Print(" infinite ")
-				// break outer
 			}
 
 			if board[new_row][new_col].coord == VISITED {
@@ -117,7 +107,6 @@ func solve(coords [][]int) int {
 	max_row := 0
 	max_col := 0
 	for _, coord := range coords {
-		// fmt.Println(coord[0], coord[1])
 		max_row = max(max_col, coord[0])
 		max_col = max(max_row, coord[1])
 	}
@@ -140,9 +129,6 @@ func solve(coords [][]int) int {
 		for row := 0; row < max_row; row++ {
 			for col := 0; col < max_col; col++ {
 				man_distance := abs(coord_row-row) + abs(coord_col-col)
-				// if board[row][col].coord == -2 {
-				// 	continue
-				// }
 				if man_distance < board[row][col].distance {
 					board[row][col] = manhattan{coord: coord_id, distance: man_distance}
 				} else if man_distance == board[row][col].distance {
@@ -152,26 +138,10 @@ func solve(coords [][]int) int {
 		}
 	}
 
-	for row := 0; row < max_row; row++ {
-		for col := 0; col < max_col; col++ {
-			if board[row][col].coord == TIED {
-				fmt.Print(".")
-			} else {
-				fmt.Printf("%v", board[row][col].coord)
-			}
-		}
-		fmt.Println()
-	}
-
 	max_area := 0
 	for row := 0; row < max_row; row++ {
 		for col := 0; col < max_col; col++ {
-			// if row != 2 || col != 5 {
-			// 	continue
-			// }
-			fmt.Printf("checking %v, %v (%v) ->", row, col, board[row][col].coord)
 			area := calculate_area(board, row, col)
-			fmt.Printf(" %v\n", area)
 			max_area = max(max_area, area)
 		}
 	}
