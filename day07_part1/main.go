@@ -48,7 +48,6 @@ func parse(filename string) [][]int {
 
 		output = append(output, []int{int(dependency[0]), int(node[0])})
 	}
-	// ret := [][]rune{[]rune{'A', 'B'}}
 	return output
 }
 
@@ -66,7 +65,6 @@ func SliceToString(a []int) string {
 
 func solution(filename string) string {
 	data := parse(filename)
-	// fmt.Println(data)
 	unique_nodes := make(map[int]bool)
 	for _, rule := range data {
 		unique_nodes[rule[0]] = true
@@ -85,11 +83,6 @@ func solution(filename string) string {
 		nodes_map[node] = index
 	}
 
-	// fmt.Println(nodes)
-	// for k, v := range nodes_map {
-	// 	fmt.Printf("%v, %v\n", k, v)
-	// }
-
 	adjacency_matrix := make([][]int, len(nodes))
 	for i := range adjacency_matrix {
 		adjacency_matrix[i] = make([]int, len(nodes))
@@ -101,11 +94,7 @@ func solution(filename string) string {
 		dep_index := nodes_map[dependency]
 		node_index := nodes_map[node]
 		adjacency_matrix[dep_index][node_index] = 1
-		// adjacency_matrix[node_index][dep_index] = true
 	}
-	// for i := 0; i < len(adjacency_matrix); i++ {
-	// 	fmt.Println(adjacency_matrix[i])
-	// }
 
 	incomming_degree := make([]int, len(nodes))
 	for j := 0; j < number_of_nodes; j++ {
@@ -113,7 +102,6 @@ func solution(filename string) string {
 			incomming_degree[j] += adjacency_matrix[i][j]
 		}
 	}
-	// fmt.Println("id", incomming_degree)
 
 	hqueue := &IntHeap{}
 	heap.Init(hqueue)
@@ -123,19 +111,16 @@ func solution(filename string) string {
 			heap.Push(hqueue, index)
 		}
 	}
-	// fmt.Println(hqueue)
 
 	output := []int{}
+
 	// BFS with a heap instead of a queue
 	for len(*hqueue) > 0 {
 		pop_node := heap.Pop(hqueue)
 		node, ok := pop_node.(int)
 		if ok {
 			output = append(output, nodes[node])
-			// fmt.Printf("%v %c\n", node, nodes[node])
 		}
-		// TODO: cycle over `node` dependencies and reduce ig
-		// if ig is zero push it into heap
 		for j := 0; j < len(adjacency_matrix); j++ {
 			if adjacency_matrix[node][j] == 1 {
 				incomming_degree[j] -= 1
@@ -145,15 +130,10 @@ func solution(filename string) string {
 				}
 			}
 		}
-		// fmt.Println(hqueue)
 	}
-	// fmt.Println(SliceToString(output))
-	// fmt.Println(strings.Join(output, ""))
 	return SliceToString(output)
-
 }
 
 func main() {
-	// fmt.Println(solution("./example.txt"))
 	fmt.Println(solution("./input.txt"))
 }
