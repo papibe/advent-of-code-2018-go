@@ -138,9 +138,7 @@ func solution(filename string, number_of_workers int, base_time int) int {
 		}
 	}
 
-	// workers_queue := []int{}
 	output := []int{}
-	_ = output
 	workers := create_workers_queues(number_of_workers)
 	seconds := 0
 
@@ -151,7 +149,7 @@ func solution(filename string, number_of_workers int, base_time int) int {
 			pop_node := heap.Pop(hqueue)
 			node, ok := pop_node.(int)
 			if !ok {
-				panic("blha")
+				panic("blah")
 			}
 
 			// route work to workers
@@ -160,14 +158,15 @@ func solution(filename string, number_of_workers int, base_time int) int {
 			}
 			continue
 		}
+
 		// process workers' work
 		for i := 0; i < number_of_workers; i++ {
 			wlen := len(workers[i])
 			if wlen > 0 {
+
 				// pop from worker queue
 				var node int
 				node, workers[i] = workers[i][wlen-1], workers[i][:wlen-1]
-				// fmt.Println("worker->", worker)
 				if len(workers[i]) == 0 {
 					output = append(output, nodes[node])
 
@@ -175,30 +174,22 @@ func solution(filename string, number_of_workers int, base_time int) int {
 					for j := 0; j < len(adjacency_matrix); j++ {
 						if adjacency_matrix[node][j] == 1 {
 							incomming_degree[j] -= 1
+
 							// push to main queue if dependencies met
 							if incomming_degree[j] == 0 {
 								heap.Push(hqueue, j)
 							}
 						}
 					}
-
 				}
 			}
 		}
-
 		seconds += 1
-		// fmt.Println(hqueue)
-		// for _, worker := range workers {
-		// 	fmt.Println(worker)
-		// }
-		// fmt.Println("===================================")
 	}
-	// fmt.Println(output)
-	// fmt.Println(SliceToString(output))
+	_ = output // output is not really needed
 	return seconds
 }
 
 func main() {
-	// fmt.Println(solution("./example.txt", 2, 0))
 	fmt.Println(solution("./input.txt", 5, 60))
 }
