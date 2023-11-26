@@ -9,15 +9,10 @@ const GRID_SIZE = 300
 
 func power_at(x int, y int, serial int) int {
 	rack_id := x + 10
-	// fmt.Println("rack_id:", rack_id)
 	power_level := (rack_id * y)
-	// fmt.Println("power starts:", power_level)
 	power_level += serial
-	// fmt.Println("adding serial:", power_level)
 	power_level *= rack_id
-	// fmt.Println("mult rack id:", power_level)
 	hundreds := (power_level / 100) % 10
-	// fmt.Println("hundreds:", hundreds)
 	hundreds -= 5
 	return hundreds
 }
@@ -57,16 +52,6 @@ func solution(serial int) (int, int) {
 }
 
 func main() {
-	// fmt.Println(power_at(3, 5, 8))      // 4
-	// fmt.Println(power_at(122, 79, 57))  // -5
-	// fmt.Println(power_at(217, 196, 39)) // 0
-	// fmt.Println(power_at(101, 153, 71)) // 4
-	x, y := solution(18)
-	fmt.Printf("%d,%d\n", x, y)
-
-	x, y = solution(42)
-	fmt.Printf("%d,%d\n", x, y)
-
-	x, y = solution(5235)
-	fmt.Printf("%d,%d\n", x, y)
+	x, y := solution(5235)
+	fmt.Printf("%d,%d\n", x, y) // 33,54
 }
