@@ -21,25 +21,12 @@ func insert(head *Marble, marble int) *Marble {
 	return new_marble
 }
 
-func print(head *Marble) {
-	current_head := head
-	for {
-		fmt.Println(head.value)
-		head = head.next
-		if head == current_head {
-			break
-		}
-	}
-}
-
 func remove_7th(head *Marble) (*Marble, int) {
 	for i := 0; i < 7; i++ {
 		head = head.prev
 	}
 	value := head.value
 	head = head.prev
-	// fmt.Println("removing:", value)
-	// fmt.Println("current node:", head.value)
 	head.next = head.next.next
 	head.prev = head
 	return head.next, value
@@ -55,8 +42,8 @@ func max_score(players []int) int {
 	return max
 }
 
-func solution(nplayers int, last_marble int) int {
-	players := make([]int, nplayers)
+func solution(n_players int, last_marble int) int {
+	players := make([]int, n_players)
 	_ = players
 	current_marble := 0
 	current_player := 0
@@ -67,7 +54,7 @@ func solution(nplayers int, last_marble int) int {
 
 	for {
 		current_marble += 1
-		current_player = (current_player + 1) % nplayers
+		current_player = (current_player + 1) % n_players
 		if current_marble%23 == 0 {
 			new_head, value := remove_7th(head)
 			head = new_head
@@ -80,7 +67,6 @@ func solution(nplayers int, last_marble int) int {
 			break
 		}
 	}
-	// print(head)
 	return max_score(players)
 }
 
