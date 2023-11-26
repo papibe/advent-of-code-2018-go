@@ -22,7 +22,7 @@ func parse(filename string) []int {
 	return numbers
 }
 
-func solve(lf []int, start int, nodes int) (int, int) {
+func solve(lf []int, start int) (int, int) {
 	internal_nodes := lf[start]
 	meta_size := lf[start+1]
 
@@ -37,7 +37,7 @@ func solve(lf []int, start int, nodes int) (int, int) {
 	children_value := []int{}
 	new_start := start + 2
 	for i := 0; i < internal_nodes; i++ {
-		sum, end := solve(lf, new_start, 1)
+		sum, end := solve(lf, new_start)
 		children_value = append(children_value, sum)
 		new_start = end + 1
 	}
@@ -52,8 +52,8 @@ func solve(lf []int, start int, nodes int) (int, int) {
 }
 
 func solution(filename string) int {
-	licence := parse(filename)
-	sum, _ := solve(licence, 0, 1)
+	license := parse(filename)
+	sum, _ := solve(license, 0)
 	return sum
 }
 
