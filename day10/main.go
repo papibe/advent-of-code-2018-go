@@ -46,7 +46,6 @@ func parse(filename string) ([]Tuple, []Tuple) {
 
 		point_x, point_y := get_points(point_matches)
 		speed_x, speed_y := get_points(speed_matches)
-		// fmt.Println(line, "\t", point_x, point_y, "\t", speed_x, speed_y)
 
 		points = append(points, Tuple{x: point_x, y: point_y})
 		speeds = append(speeds, Tuple{x: speed_x, y: speed_y})
@@ -78,11 +77,10 @@ func print_points(current_points []Tuple) bool {
 			min_y = point.y
 		}
 	}
-	// fmt.Println(min_x, max_x, min_y, max_y, "\t", max_x-min_x, max_y-min_y)
-
 	if max_y-min_y > 10 {
 		return false
 	}
+	fmt.Println("Part 1:")
 	for y := min_y; y <= max_y; y++ {
 		for x := min_x; x <= max_x; x++ {
 			_, ok := points[Tuple{x: x, y: y}]
@@ -126,5 +124,5 @@ func solution(filename string) int {
 
 func main() {
 	// fmt.Println(solution("./example.txt")) // HI
-	fmt.Println(solution("./input.txt")) // GPJLLLLH
+	fmt.Println("Part 2:", solution("./input.txt")) // GPJLLLLH
 }
