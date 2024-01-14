@@ -50,7 +50,7 @@ func Test_solution_42_should_be_232_251_12(t *testing.T) {
 	expected_x := 232
 	expected_y := 251
 	expected_size := 12
-	result_x, result_y, result_size := solution(18)
+	result_x, result_y, result_size := solution(42)
 	if result_x != expected_x || result_y != expected_y || result_size != expected_size {
 		t.Errorf("'./example.txt' -> %v,%v; need '%v,%v'", result_x, result_y, expected_x, expected_y)
 	}
