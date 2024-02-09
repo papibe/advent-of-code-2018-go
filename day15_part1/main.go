@@ -11,8 +11,20 @@ const SPACE = '.'
 const ELF = 'E'
 const GOBLIN = 'G'
 
+type Cell interface {
+	Move()
+}
+
 type Board struct {
-	grid [][]rune
+	grid [][]Cell
+}
+
+type Nature struct {
+	kind rune
+}
+
+func (n Nature) Move() {
+
 }
 
 type Elf struct {
@@ -21,10 +33,18 @@ type Elf struct {
 	col int
 }
 
+func (e Elf) Move() {
+
+}
+
 type Goblin struct {
 	hp  int
 	row int
 	col int
+}
+
+func (g Goblin) Move() {
+
 }
 
 func parse(filename string) (Board, []Elf, []Goblin) {
@@ -33,19 +53,36 @@ func parse(filename string) (Board, []Elf, []Goblin) {
 		panic("File not found")
 	}
 
-	board := Board{grid: [][]rune{}}
+	board := Board{grid: [][]Cell{}}
 	elves := []Elf{}
 	goblins := []Goblin{}
 
 	for row, line := range strings.Split(strings.Trim(string(data), "\n"), "\n") {
-		new_row := []rune{}
+		new_row := []Cell{}
 		for col, char := range line {
-			// form grid row
-			if char == WALL {
-				new_row = append(new_row, char)
-			} else {
-				new_row = append(new_row, SPACE)
+			// switch char {
+			// case WALL:
+			// 	new_row = append(new_row, Nature{WALL})
+			// case SPACE:
+			// 	new_row = append(new_row, Nature{SPACE})
+			// case ELF:
+			// 	new_row = append(new_row, Elf{200, row, col})
+			// case GOBLIN:
+			// 	new_row = append(new_row, Goblin{200, row, col})
+			// }
+			var cell Cell
+			switch char {
+			case WALL:
+				cell = Nature{WALL}
+			case SPACE:
+				cell = Nature{SPACE}
+			case ELF:
+				cell = Elf{200, row, col}
+			case GOBLIN:
+				cell = Goblin{200, row, col}
 			}
+			new_row = append(new_row, cell)
+
 			// get list of players
 			if char == ELF {
 				elves = append(elves, Elf{200, row, col})
