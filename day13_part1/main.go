@@ -216,6 +216,9 @@ func solution(filename string) (int, int) {
 }
 
 func main() {
-	fmt.Println(solution("./example.txt")) // 7, 3
-	fmt.Println(solution("./input.txt"))   // 74, 87
+	x, y := solution("./example.txt")
+	fmt.Printf("%d,%d\n", x, y) // 7,3
+
+	x, y = solution("./input.txt")
+	fmt.Printf("%d,%d\n", x, y) // 74,87
 }
