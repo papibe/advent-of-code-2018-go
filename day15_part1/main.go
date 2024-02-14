@@ -25,6 +25,10 @@ type Cell struct {
 }
 
 func (cell Cell) isEnemy(kind rune) bool {
+	if kind == WALL || kind == SPACE {
+		return false
+	}
+
 	if cell.kind != kind {
 		return true
 	} else {
@@ -66,6 +70,13 @@ func (board Board) Print() {
 			fmt.Print(string(cell.kind))
 		}
 		fmt.Println()
+	}
+	for _, line := range board.grid {
+		for _, cell := range line {
+			if !cell.IsNature() {
+				fmt.Printf("%c(%d)\n", cell.kind, cell.hp)
+			}
+		}
 	}
 	fmt.Println()
 }
@@ -254,6 +265,11 @@ func (board *Board) resetMoves() {
 	}
 }
 
+func (board *Board) Attack(row, col int) {
+	cell := board.grid[row][col]
+	cell.hp = cell.hp - ATTACK_POWER
+}
+
 func deepcopy(original map[Coord]bool) map[Coord]bool {
 	new_copy := make(map[Coord]bool)
 	for key, value := range original {
@@ -329,16 +345,55 @@ func get_target(min_targets []QElement) QElement {
 }
 
 func get_attack_target(board Board, row, col int) (Coord, error) {
+	attacker := board.grid[row][col]
 	targets := []Coord{}
 	steps := [][]int{{1, 0}, {-1, 0}, {0, 1}, {0, -1}}
 	for _, step := range steps {
-		new_row := pos.row + step[0]
-		new_col := pos.col + step[1]
-		if board.grid[row][col] {
-
+		new_row := row + step[0]
+		new_col := col + step[1]
+		target := board.grid[new_row][new_col]
+		if attacker.isEnemy(target.kind) {
+			targets = append(targets, Coord{new_row, new_col})
 		}
 	}
-
+	if len(targets) == 0 {
+		return Coord{-1, -1}, errors.New("no target in sight")
+	}
+	targets_min_hp := 10000
+	for _, coord := range targets {
+		target := board.grid[coord.row][coord.col]
+		if target.hp < targets_min_hp {
+			targets_min_hp = target.hp
+		}
+	}
+	min_targets := []Coord{}
+	for _, coord := range targets {
+		target := board.grid[coord.row][coord.col]
+		if target.hp == targets_min_hp {
+			min_targets = append(min_targets, coord)
+		}
+	}
+	if len(min_targets) == 1 {
+		coord := min_targets[0]
+		return Coord{coord.row, coord.col}, nil
+	}
+	// get read order target
+	min_row := 10000
+	for _, coords := range min_targets {
+		row := coords.row
+		if row < min_row {
+			min_row = row
+		}
+	}
+	min_col := 10000
+	for _, coord := range min_targets {
+		row := coord.row
+		col := coord.col
+		if row == min_row && row < min_col {
+			min_col = col
+		}
+	}
+	return Coord{min_row, min_col}, nil
 }
 
 func solve(board Board) int {
@@ -371,7 +426,16 @@ func solve(board Board) int {
 					board.Move(row, col, next_step)
 					// board.Print()
 				}
-				attack_target := get_attack_target(board, row, col)
+				attack_target, err := get_attack_target(board, row, col)
+				if err != nil {
+					continue
+				}
+				fmt.Println(row, col, "attack", attack_target)
+				// (&board).Attack(attack_target.row, attack_target.col)
+				attack_cell := board.grid[attack_target.row][attack_target.col]
+				attack_cell.hp -= ATTACK_POWER
+				// (&board.grid[attack_target.row][attack_target.col]).hp -= ATTACK_POWER
+				// TODO: kill unit
 				// break
 			}
 			// break
@@ -394,6 +458,7 @@ func solution(filename string) int {
 func main() {
 	// fmt.Println(solution("./example0.txt"))
 	// fmt.Println(solution("./example1.txt"))
-	fmt.Println(solution("./example2.txt"))
+	// fmt.Println(solution("./example2.txt"))
+	fmt.Println(solution("./example3.txt"))
 	// fmt.Println(solution("./input.txt"))
 }
