@@ -17,77 +17,77 @@ type Sample struct {
 	C      int
 }
 
-func addr(opcode, A, B, C int, before []int) []int {
+func addr(A, B, C int, before []int) []int {
 	after := make([]int, 4)
 	copy(after, before)
 	after[C] = before[A] + before[B]
 	return after
 }
 
-func addi(opcode, A, B, C int, before []int) []int {
+func addi(A, B, C int, before []int) []int {
 	after := make([]int, 4)
 	copy(after, before)
 	after[C] = before[A] + B
 	return after
 }
 
-func mulr(opcode, A, B, C int, before []int) []int {
+func mulr(A, B, C int, before []int) []int {
 	after := make([]int, 4)
 	copy(after, before)
 	after[C] = before[A] * before[B]
 	return after
 }
 
-func muli(opcode, A, B, C int, before []int) []int {
+func muli(A, B, C int, before []int) []int {
 	after := make([]int, 4)
 	copy(after, before)
 	after[C] = before[A] * B
 	return after
 }
 
-func banr(opcode, A, B, C int, before []int) []int {
+func banr(A, B, C int, before []int) []int {
 	after := make([]int, 4)
 	copy(after, before)
 	after[C] = before[A] & before[B]
 	return after
 }
 
-func bani(opcode, A, B, C int, before []int) []int {
+func bani(A, B, C int, before []int) []int {
 	after := make([]int, 4)
 	copy(after, before)
 	after[C] = before[A] & B
 	return after
 }
 
-func borr(opcode, A, B, C int, before []int) []int {
+func borr(A, B, C int, before []int) []int {
 	after := make([]int, 4)
 	copy(after, before)
 	after[C] = before[A] | before[B]
 	return after
 }
 
-func bori(opcode, A, B, C int, before []int) []int {
+func bori(A, B, C int, before []int) []int {
 	after := make([]int, 4)
 	copy(after, before)
 	after[C] = before[A] | B
 	return after
 }
 
-func setr(opcode, A, B, C int, before []int) []int {
+func setr(A, B, C int, before []int) []int {
 	after := make([]int, 4)
 	copy(after, before)
 	after[C] = before[A]
 	return after
 }
 
-func seti(opcode, A, B, C int, before []int) []int {
+func seti(A, B, C int, before []int) []int {
 	after := make([]int, 4)
 	copy(after, before)
 	after[C] = A
 	return after
 }
 
-func gtir(opcode, A, B, C int, before []int) []int {
+func gtir(A, B, C int, before []int) []int {
 	after := make([]int, 4)
 	copy(after, before)
 	if A > before[B] {
@@ -98,7 +98,7 @@ func gtir(opcode, A, B, C int, before []int) []int {
 	return after
 }
 
-func gtri(opcode, A, B, C int, before []int) []int {
+func gtri(A, B, C int, before []int) []int {
 	after := make([]int, 4)
 	copy(after, before)
 	if before[A] > B {
@@ -109,7 +109,7 @@ func gtri(opcode, A, B, C int, before []int) []int {
 	return after
 }
 
-func gtrr(opcode, A, B, C int, before []int) []int {
+func gtrr(A, B, C int, before []int) []int {
 	after := make([]int, 4)
 	copy(after, before)
 	if before[A] > before[B] {
@@ -120,7 +120,7 @@ func gtrr(opcode, A, B, C int, before []int) []int {
 	return after
 }
 
-func eqir(opcode, A, B, C int, before []int) []int {
+func eqir(A, B, C int, before []int) []int {
 	after := make([]int, 4)
 	copy(after, before)
 	if A == before[B] {
@@ -131,7 +131,7 @@ func eqir(opcode, A, B, C int, before []int) []int {
 	return after
 }
 
-func eqri(opcode, A, B, C int, before []int) []int {
+func eqri(A, B, C int, before []int) []int {
 	after := make([]int, 4)
 	copy(after, before)
 	if before[A] == B {
@@ -142,7 +142,7 @@ func eqri(opcode, A, B, C int, before []int) []int {
 	return after
 }
 
-func eqrr(opcode, A, B, C int, before []int) []int {
+func eqrr(A, B, C int, before []int) []int {
 	after := make([]int, 4)
 	copy(after, before)
 	if before[A] == before[B] {
@@ -153,7 +153,7 @@ func eqrr(opcode, A, B, C int, before []int) []int {
 	return after
 }
 
-type fs func(opcode, A, B, C int, before []int) []int
+type fs func(A, B, C int, before []int) []int
 
 var FUNCTIONS = []fs{addr, addi, mulr, muli, banr, bani, borr, bori, setr, seti, gtir, gtri, gtrr, eqir, eqri, eqrr}
 
@@ -222,7 +222,7 @@ func solve(samples []Sample) int {
 	for _, sample := range samples {
 		behaves_like_a_opcode := 0
 		for _, function := range FUNCTIONS {
-			after := function(sample.opcode, sample.A, sample.B, sample.C, sample.before)
+			after := function(sample.A, sample.B, sample.C, sample.before)
 			if regs_are_equal(after, sample.after) {
 				behaves_like_a_opcode += 1
 			}
