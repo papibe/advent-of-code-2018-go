@@ -86,7 +86,7 @@ type QElement struct {
 	distance int
 }
 
-func (board Board) get_target_in_range(row, col int) []QElement {
+func (board Board) get_targets(row, col int) ([]Coord, int) {
 	rows := len(board.grid)
 	cols := len(board.grid[0])
 
@@ -97,8 +97,11 @@ func (board Board) get_target_in_range(row, col int) []QElement {
 	visited := make(map[Coord]bool)
 	visited[start] = true
 
-	targets := []QElement{}
+	min_distance := 10000
 
+	min_targets := make(map[int][]Coord)
+
+	// BFS
 	for len(queue) > 0 {
 		element := queue[0]
 		pos := element.coords
@@ -124,7 +127,15 @@ func (board Board) get_target_in_range(row, col int) []QElement {
 
 				if new_player.IsElf() || new_player.IsGoblin() {
 					if current.isEnemy(new_player.kind) {
-						targets = append(targets, QElement{pos, distance})
+						if distance < min_distance {
+							min_distance = distance
+						}
+						_, distance_is_in_map := min_targets[distance]
+						if distance_is_in_map {
+							min_targets[distance] = append(min_targets[distance], pos)
+						} else {
+							min_targets[distance] = []Coord{pos}
+						}
 					}
 					continue
 				}
@@ -135,16 +146,28 @@ func (board Board) get_target_in_range(row, col int) []QElement {
 
 		}
 	}
-
-	return targets
+	return min_targets[min_distance], min_distance
 }
 
-func get_min_distance(board Board, row, col, max_distance int, destination Coord) int {
+func get_min_distances(board Board, row, col, max_distance int, destination Coord) map[Coord]int {
 	rows := len(board.grid)
 	cols := len(board.grid[0])
 
-	// BFS init
-	start := Coord{row, col}
+	distances := make(map[Coord]int)
+
+	steps := [][]int{{1, 0}, {-1, 0}, {0, 1}, {0, -1}}
+	for _, step := range steps {
+		new_row := row + step[0]
+		new_col := col + step[1]
+		if new_row >= 0 && new_row < rows && new_col >= 0 && new_col < cols {
+			if board.grid[new_row][new_col].kind == SPACE {
+				distances[Coord{new_row, new_col}] = -1
+			}
+		}
+	}
+
+	// BFS
+	start := Coord{destination.row, destination.col}
 	visited := make(map[Coord]bool)
 	visited[start] = true
 	queue := []QElement{{start, 0}}
@@ -158,10 +181,20 @@ func get_min_distance(board Board, row, col, max_distance int, destination Coord
 		if current_distance > max_distance {
 			continue
 		}
-		if pos.row == destination.row && pos.col == destination.col {
-			return current_distance
+		_, is_in_distances := distances[pos]
+		if is_in_distances {
+			distances[pos] = current_distance
 		}
-		steps := [][]int{{1, 0}, {-1, 0}, {0, 1}, {0, -1}}
+		ready := true
+		for _, distance := range distances {
+			if distance < 0 {
+				ready = false
+			}
+		}
+		if ready {
+			return distances
+		}
+
 		for _, step := range steps {
 			new_row := pos.row + step[0]
 			new_col := pos.col + step[1]
@@ -183,29 +216,18 @@ func get_min_distance(board Board, row, col, max_distance int, destination Coord
 		}
 
 	}
-	return -1
+	trim_distances := make(map[Coord]int)
+	for coord, distance := range distances {
+		if distance >= 0 {
+			trim_distances[coord] = distance
+		}
+	}
+	return trim_distances
 }
 
 func (board Board) get_next_step(row, col, max_distance int, destination Coord) (Coord, error) {
-	rows := len(board.grid)
-	cols := len(board.grid[0])
+	distances := get_min_distances(board, row, col, max_distance, destination)
 
-	distances := make(map[Coord]int)
-
-	// steps := [][]int{{1, 0}, {-1, 0}, {0, 1}, {0, -1}, {0, 0}}
-	steps := [][]int{{-1, 0}, {0, -1}, {0, 1}, {1, 0}}
-	for _, step := range steps {
-		new_row := row + step[0]
-		new_col := col + step[1]
-		if new_row >= 0 && new_row < rows && new_col >= 0 && new_col < cols {
-			if board.grid[new_row][new_col].kind == SPACE {
-				distance := get_min_distance(board, new_row, new_col, max_distance, destination)
-				if distance >= 0 {
-					distances[Coord{new_row, new_col}] = get_min_distance(board, new_row, new_col, max_distance, destination)
-				}
-			}
-		}
-	}
 	min_distance := 10000
 	for _, distance := range distances {
 		if distance < min_distance {
@@ -218,6 +240,8 @@ func (board Board) get_next_step(row, col, max_distance int, destination Coord) 
 			min_coords[coord] = distance
 		}
 	}
+	steps := [][]int{{-1, 0}, {0, -1}, {0, 1}, {1, 0}}
+
 	for _, step := range steps {
 		new_row := row + step[0]
 		new_col := col + step[1]
@@ -293,8 +317,6 @@ func parse(filename string) Board {
 	}
 
 	board := Board{grid: [][]Cell{}}
-	// elves := []Elf{}
-	// goblins := []Goblin{}
 
 	for _, line := range strings.Split(strings.Trim(string(data), "\n"), "\n") {
 		new_row := []Cell{}
@@ -310,42 +332,22 @@ func parse(filename string) Board {
 	return board
 }
 
-func get_min_targets(targets []QElement) []QElement {
-	// get min distance
-	min_distance := 10000
-	for _, target := range targets {
-		distance := target.distance
-		if distance < min_distance {
-			min_distance = distance
-		}
-	}
-	// get all points with min distance
-	min_targets := []QElement{}
-	for _, target := range targets {
-		distance := target.distance
-		if distance <= min_distance {
-			min_targets = append(min_targets, target)
-		}
-	}
-	return min_targets
-}
-
-func get_target(min_targets []QElement) QElement {
+func get_target(min_targets []Coord) Coord {
 	min_row := 10000
-	for _, target := range min_targets {
-		row := target.coords.row
+	for _, coord := range min_targets {
+		row := coord.row
 		if row < min_row {
 			min_row = row
 		}
 	}
 	min_col := 10000
-	var min_target QElement
-	for _, target := range min_targets {
-		row := target.coords.row
-		col := target.coords.col
+	var min_target Coord
+	for _, coord := range min_targets {
+		row := coord.row
+		col := coord.col
 		if row == min_row && row < min_col {
 			min_col = col
-			min_target = target
+			min_target = coord
 		}
 	}
 	return min_target
@@ -410,26 +412,21 @@ func solve(board Board) int {
 		for row := 0; row < len(board.grid); row++ {
 			for col := 0; col < len(board.grid[0]); col++ {
 				cell := board.grid[row][col]
-				if cell.IsNature() {
+				if cell.IsNature() || cell.moved {
 					continue
 				}
-				if cell.moved {
-					continue
-				}
-				end, total_hp := board.endCombat()
 				// Combat ends condition
+				end, total_hp := board.endCombat()
 				if end {
 					return (round - 1) * total_hp
 				}
-				targets := board.get_target_in_range(row, col)
+				min_targets, distance := board.get_targets(row, col)
 
-				min_targets := get_min_targets(targets)
 				next_row := row
 				next_col := col
 				if len(min_targets) > 0 {
 					target := get_target(min_targets)
-					distance := target.distance
-					next_step, err := board.get_next_step(row, col, distance, target.coords)
+					next_step, err := board.get_next_step(row, col, distance, target)
 					if err == nil {
 						board.Move(row, col, next_step)
 						next_row = next_step.row
