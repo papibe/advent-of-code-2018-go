@@ -60,58 +60,29 @@ func parse(filename string) (map[Coord]bool, int, int) {
 	return reservoir, min_y, max_y
 }
 
-func go_right(reservoir map[Coord]bool, x, y, max_y int, wet, rest *map[Coord]bool) (Coord, bool) {
+func go_side(reservoir map[Coord]bool, x, y int, wet, rest *map[Coord]bool, step int) (Coord, bool) {
 	for {
-		// (*wet)[Coord{x, y}] = true
-		_, lower_right_is_clay := reservoir[Coord{x + 1, y + 1}]
-		_, lower_right_is_settled := (*rest)[Coord{x + 1, y + 1}]
-		if !lower_right_is_clay && !lower_right_is_settled {
-			// fmt.Println("gright", x, y)
-			// panic("what?")
-			// go_down(reservoir, x+1, y, max_y, wet, settled)
-			_, next_is_clay := reservoir[Coord{x + 1, y}]
-			if next_is_clay {
-				panic("counting clay")
-			}
-			// (*wet)[Coord{x + 1, y}] = true
-			return Coord{x + 1, y}, false
+		_, lower_left_is_clay := reservoir[Coord{x + step, y + 1}]
+		_, lower_left_is_settled := (*rest)[Coord{x + step, y + 1}]
+		if !lower_left_is_clay && !lower_left_is_settled {
+			return Coord{x + step, y}, false
 		}
 
-		_, next_is_clay := reservoir[Coord{x + 1, y}]
-		_, next_is_settled := (*rest)[Coord{x + 1, y}]
+		_, next_is_clay := reservoir[Coord{x + step, y}]
+		_, next_is_settled := (*rest)[Coord{x + step, y}]
 		if next_is_clay || next_is_settled {
-			// (*settled)[Coord{x, y}] = true
 			return Coord{x, y}, true
 		}
-		x += 1
+		x += step
 	}
 }
 
-func go_left(reservoir map[Coord]bool, x, y, max_y int, wet, rest *map[Coord]bool) (Coord, bool) {
-	for {
-		// (*wet)[Coord{x, y}] = true
-		_, lower_left_is_clay := reservoir[Coord{x - 1, y + 1}]
-		_, lower_left_is_settled := (*rest)[Coord{x - 1, y + 1}]
-		if !lower_left_is_clay && !lower_left_is_settled {
-			// fmt.Println("gleft", x, y)
-			// panic("what?")
-			// go_down(reservoir, x-1, y, max_y, wet, settled)
-			_, next_is_clay := reservoir[Coord{x - 1, y}]
-			if next_is_clay {
-				panic("counting clay")
-			}
-			// (*wet)[Coord{x - 1, y}] = true
-			return Coord{x - 1, y}, false
-		}
+func go_left(reservoir map[Coord]bool, x, y int, wet, rest *map[Coord]bool) (Coord, bool) {
+	return go_side(reservoir, x, y, wet, rest, -1)
+}
 
-		_, next_is_clay := reservoir[Coord{x - 1, y}]
-		_, next_is_settled := (*rest)[Coord{x - 1, y}]
-		if next_is_clay || next_is_settled {
-			// (*settled)[Coord{x, y}] = true
-			return Coord{x, y}, true
-		}
-		x -= 1
-	}
+func go_right(reservoir map[Coord]bool, x, y int, wet, rest *map[Coord]bool) (Coord, bool) {
+	return go_side(reservoir, x, y, wet, rest, 1)
 }
 
 func solve(reservoir map[Coord]bool, min_y, max_y int, wet, rest *map[Coord]bool) (int, int) {
@@ -147,8 +118,8 @@ func solve(reservoir map[Coord]bool, min_y, max_y int, wet, rest *map[Coord]bool
 
 		// hit clay or water at rest
 		if lower_is_clay || lower_is_at_rest {
-			rcoord, rsettled := go_right(reservoir, coord.x, coord.y, max_y, wet, rest)
-			lcoord, lsettled := go_left(reservoir, coord.x, coord.y, max_y, wet, rest)
+			rcoord, rsettled := go_right(reservoir, coord.x, coord.y, wet, rest)
+			lcoord, lsettled := go_left(reservoir, coord.x, coord.y, wet, rest)
 
 			if lsettled && rsettled {
 				for row := lcoord.x; row <= rcoord.x; row++ {
