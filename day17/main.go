@@ -86,11 +86,8 @@ func go_right(reservoir map[Coord]bool, x, y int, wet, rest *map[Coord]bool) (Co
 }
 
 func solve(reservoir map[Coord]bool, min_y, max_y int, wet, rest *map[Coord]bool) (int, int) {
-	counter := 0
-	stack := []Coord{{500, 1}}
-	if 1 >= min_y {
-		(*wet)[Coord{500, 1}] = true
-	}
+	stack := []Coord{{500, min_y}}
+	(*wet)[Coord{500, min_y}] = true
 	for len(stack) > 0 {
 
 		// pop stack
@@ -138,13 +135,6 @@ func solve(reservoir map[Coord]bool, min_y, max_y int, wet, rest *map[Coord]bool
 				}
 			}
 		}
-
-		counter += 1
-		if counter > 6500 {
-			fmt.Println("max counter")
-			break
-		}
-
 	}
 	return len(*wet), len(*rest)
 }
