@@ -28,7 +28,7 @@ func parse(filename string) string {
 	return regex
 }
 
-func draw(doors map[Coord]rune, rooms, walls map[Coord]bool) {
+func draw(doors map[Coord]rune, rooms, walls map[Coord]bool) string {
 	min_row := math.MaxInt
 	max_row := math.MinInt
 	min_col := math.MaxInt
@@ -52,31 +52,39 @@ func draw(doors map[Coord]rune, rooms, walls map[Coord]bool) {
 		max_row = max(max_row, wall.row)
 		max_col = max(max_col, wall.col)
 	}
-	// fmt.Println(min_row, max_row, min_col, max_col)
-	fmt.Println()
+	output := []string{}
+	output = append(output, "\n")
 
 	for row := min_row; row <= max_row; row++ {
 		for col := min_col; col <= max_col; col++ {
 			if row == 0 && col == 0 {
-				fmt.Print("X")
+				// fmt.Print("X")
+				output = append(output, "X")
 				continue
 			}
 			_, is_room := rooms[Coord{row, col}]
 			door, is_door := doors[Coord{row, col}]
 			_, is_wall := walls[Coord{row, col}]
 			if is_room {
-				fmt.Print(".")
+				// fmt.Print(".")
+				output = append(output, ".")
 			} else if is_door {
-				fmt.Print(string(door))
+				// fmt.Print(string(door))
+				output = append(output, string(door))
+
 			} else if is_wall {
-				fmt.Print("#")
+				// fmt.Print("#")
+				output = append(output, "#")
 			} else {
 				walls[Coord{row, col}] = true
-				fmt.Print("#")
+				// fmt.Print("#")
+				output = append(output, "#")
 			}
 		}
-		fmt.Println()
+		// fmt.Println()
+		output = append(output, "\n")
 	}
+	return strings.Join(output, "")
 }
 
 func read_regex(regex string, index, row, col int) (map[Coord]rune, map[Coord]bool, map[Coord]bool) {
