@@ -155,57 +155,27 @@ func parse(filename string) ([]Instruction, int) {
 	return instructions, register
 }
 
-type State struct {
-	reg0 int
-	reg1 int
-	reg2 int
-	reg3 int
-	reg4 int
-	reg5 int
-}
-
-func solve(instructions []Instruction, intruction_pointer, register0, max_instructions int) bool {
+func solve(instructions []Instruction, intruction_pointer, register0 int) int {
 	registers := []int{register0, 0, 0, 0, 0, 0}
 	program_pointer := registers[intruction_pointer]
-	state := make(map[State]bool)
-	for ninstuction := 0; ninstuction < max_instructions; ninstuction++ {
-		flag := false
-		if program_pointer > 25 {
-			fmt.Print("pointer", program_pointer, registers)
-			flag = true
-		}
-		current_state := State{registers[0], registers[1], registers[2], registers[3], registers[4], registers[5]}
-		_, is_already_in_state := state[current_state]
-		if is_already_in_state {
-			fmt.Println("loop detected at ", ninstuction)
-		} else {
-			state[current_state] = true
-		}
-		if program_pointer < 0 || program_pointer > len(instructions)-1 {
-			return true
+	for {
+		// input _analisys.txt
+		// instruction 28 uses register 0
+		if program_pointer == 28 {
+			return registers[4]
 		}
 		instruction := instructions[program_pointer]
 		FUNCTIONS[instruction.opcode](instruction.A, instruction.B, instruction.C, &registers)
 		registers[intruction_pointer] += 1
 		program_pointer = registers[intruction_pointer]
-		if flag {
-			fmt.Println("\t", registers)
-		}
 	}
-	return false
 }
 
 func solution(filename string) int {
 	instructions, instruction_register := parse(filename)
-	max_instructions := 10000
-	for reg0 := 15823996; reg0 < 15823996+1; reg0++ {
-		if solve(instructions, instruction_register, reg0, max_instructions) {
-			fmt.Println(reg0, "finishes")
-		}
-	}
-	return 0
+	return solve(instructions, instruction_register, 0)
 }
 
 func main() {
-	fmt.Println(solution("input.txt")) //
+	fmt.Println(solution("input.txt")) // 15823996
 }

@@ -96,7 +96,7 @@ s[3] = r[5]
 s[1] = 7
 
 // 28 eqrr 4 0 5
-if r[4] == r[0]
+if r[4] == r[0] # <---- only place that reg0 is used
     s[5] = 1
 else:
     s[5] = 0
