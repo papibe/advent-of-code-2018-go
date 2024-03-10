@@ -159,8 +159,9 @@ func solve(instructions []Instruction, intruction_pointer, register0 int) int {
 	registers := []int{register0, 0, 0, 0, 0, 0}
 	program_pointer := registers[intruction_pointer]
 	for {
-		// input _analisys.txt
-		// instruction 28 uses register 0
+		// code analisys in input_analisys.txt
+		// basically instruction 28 is the only that uses register 0
+		// makes a difference when reg0 is equal to reg4
 		if program_pointer == 28 {
 			return registers[4]
 		}
