@@ -3,6 +3,7 @@ package main
 import (
 	"container/heap"
 	"fmt"
+	"math"
 )
 
 type Coord struct {
@@ -14,32 +15,81 @@ const ROCKY = 0
 const WET = 1
 const NARROW = 2
 
+const TORCH = 0
+const CLIMBING_GEAR = 1
+const NEITHER = 2
+
+var right_tool = map[int]map[int]bool{
+	ROCKY: {
+		TORCH:         true,
+		CLIMBING_GEAR: true,
+		NEITHER:       false,
+	},
+	WET: {
+		TORCH:         false,
+		CLIMBING_GEAR: true,
+		NEITHER:       true,
+	},
+	NARROW: {
+		TORCH:         true,
+		CLIMBING_GEAR: false,
+		NEITHER:       true,
+	},
+}
+
 type State struct {
-	x       int
-	y       int
-	tool    int
-	minutes int
+	x           int
+	y           int
+	tool        int
+	region_type int
 }
 
-// An IntHeap is a min-heap of ints.
-type IntHeap []int
-
-func (h IntHeap) Len() int           { return len(h) }
-func (h IntHeap) Less(i, j int) bool { return h[i] < h[j] }
-func (h IntHeap) Swap(i, j int)      { h[i], h[j] = h[j], h[i] }
-
-func (h *IntHeap) Push(x any) {
-	// Push and Pop use pointer receivers because they modify the slice's length,
-	// not just its contents.
-	*h = append(*h, x.(int))
+// An Item is something we manage in a priority queue.
+type Item struct {
+	value    State // The value of the item; arbitrary.
+	priority int   // The priority of the item in the queue.
+	// The index is needed by update and is maintained by the heap.Interface methods.
+	index int // The index of the item in the heap.
 }
 
-func (h *IntHeap) Pop() any {
-	old := *h
+// A PriorityQueue implements heap.Interface and holds Items.
+type PriorityQueue []*Item
+
+func (pq PriorityQueue) Len() int { return len(pq) }
+
+func (pq PriorityQueue) Less(i, j int) bool {
+	// We want Pop to give us the highest, not lowest, priority so we use greater than here.
+	return pq[i].priority < pq[j].priority
+}
+
+func (pq PriorityQueue) Swap(i, j int) {
+	pq[i], pq[j] = pq[j], pq[i]
+	pq[i].index = i
+	pq[j].index = j
+}
+
+func (pq *PriorityQueue) Push(x any) {
+	n := len(*pq)
+	item := x.(*Item)
+	item.index = n
+	*pq = append(*pq, item)
+}
+
+func (pq *PriorityQueue) Pop() any {
+	old := *pq
 	n := len(old)
-	x := old[n-1]
-	*h = old[0 : n-1]
-	return x
+	item := old[n-1]
+	old[n-1] = nil  // avoid memory leak
+	item.index = -1 // for safety
+	*pq = old[0 : n-1]
+	return item
+}
+
+// update modifies the priority and value of an Item in the queue.
+func (pq *PriorityQueue) update(item *Item, value State, priority int) {
+	item.value = value
+	item.priority = priority
+	heap.Fix(pq, item.index)
 }
 
 var memo = make(map[Coord]int)
@@ -73,40 +123,145 @@ func erosion_level(gindex, depth int) int {
 	return (gindex + depth) % 20183
 }
 
-func create_cave_map(depth, target_x, target_y int) map[Coord]int {
-	cave := make(map[Coord]int)
-	for x := 0; x <= target_x; x++ {
-		for y := 0; y <= target_y; y++ {
-			gindex := geologic_index(x, y, depth, target_x, target_y)
-			elevel := erosion_level(gindex, depth)
-			region_type := elevel % 3
-			cave[Coord{x, y}] = region_type
-		}
+func get_cave(depth, x, y, target_x, target_y int) int {
+	if x == target_x && y == target_y {
+		return ROCKY
 	}
-	return cave
-
+	gindex := geologic_index(x, y, depth, target_x, target_y)
+	elevel := erosion_level(gindex, depth)
+	region_type := elevel % 3
+	return region_type
 }
 
-func solve(cave map[Coord]int) int {
-	s1 := State{0, 0, 0, 5}
-	s2 := State{0, 0, 0, 1}
-	s3 := State{0, 0, 0, 3}
+// func solve_sample(cave map[Coord]int) int {
+// 	s1 := State{0, 1, 0}
+// 	s2 := State{0, 2, 0}
+// 	s3 := State{0, 3, 0}
 
-	h := &IntHeap{s1, s2, s3}
-	heap.Init(h)
-	heap.Push(h, State{0, 0, 0, 5})
-	heap.Push(h, State{0, 0, 0, 1})
-	heap.Push(h, State{0, 0, 0, 3})
+// 	// Some items and their priorities.
+// 	items := map[State]int{
+// 		s1: 3, s2: 2, s3: 4,
+// 	}
 
-	return 0
+// 	// Create a priority queue, put the items in it, and
+// 	// establish the priority queue (heap) invariants.
+// 	pq := PriorityQueue{}
+// 	heap.Init(&pq)
+
+// 	i := 0
+// 	for value, priority := range items {
+// 		heap.Push(&pq, &Item{value: value, priority: priority, index: i})
+// 		i++
+// 	}
+
+// 	// Insert a new item and then modify its priority.
+// 	item := &Item{
+// 		value:    State{0, 4, 0},
+// 		priority: 1,
+// 	}
+// 	heap.Push(&pq, item)
+// 	// pq.update(item, item.value, 5)
+
+// 	// Take the items out; they arrive in decreasing priority order.
+// 	for pq.Len() > 0 {
+// 		item := heap.Pop(&pq).(*Item)
+// 		fmt.Printf("%.2d:%v\n", item.priority, item.value)
+// 	}
+
+// 	return 0
+// }
+
+func solve(depth, target_x, target_y int) int {
+	// Dijstra init
+	pq := PriorityQueue{}
+	heap.Init(&pq)
+	heap.Push(&pq, &Item{value: State{0, 0, TORCH, ROCKY}, priority: 0})
+	visited := make(map[Coord]bool)
+	visited[Coord{0, 0}] = true
+
+	distances := make(map[Coord]int)
+	distances[Coord{0, 0}] = 0
+
+	// BFS Dijstra
+	for pq.Len() > 0 {
+		item := heap.Pop(&pq).(*Item)
+		state := item.value
+		x, y, tool, current_region_type := state.x, state.y, state.tool, state.region_type
+		minutes := item.priority
+
+		// fmt.Println(x, y)
+
+		if x == target_x && y == target_y {
+			fmt.Println("arriving. tool", tool)
+			return minutes
+		}
+
+		steps := [][]int{{1, 0}, {-1, 0}, {0, 1}, {0, -1}}
+		for _, step := range steps {
+			// only >= 0 coordinates
+			new_x := x + step[0]
+			new_y := y + step[1]
+			if new_x < 0 || new_y < 0 {
+				continue
+			}
+			// region_type, is_in_cave := cave[Coord{new_x, new_y}]
+			next_region_type := get_cave(depth, new_x, new_y, target_x, target_y)
+			// _, is_visited := visited[Coord{new_x, new_y}]
+			// if is_visited {
+			// 	continue
+			// }
+			if right_tool[next_region_type][tool] {
+				// keep same tool
+				new_minutes := minutes + 1
+				current_distance, is_seen := distances[Coord{new_x, new_y}]
+				if !is_seen {
+					current_distance = math.MaxInt
+				}
+				if new_minutes < current_distance {
+					item := &Item{
+						value:    State{new_x, new_y, tool, next_region_type},
+						priority: new_minutes,
+					}
+					heap.Push(&pq, item)
+					distances[Coord{new_x, new_y}] = new_minutes
+					visited[Coord{new_x, new_y}] = true
+				}
+				// continue
+			}
+
+			// change tool
+			for new_tool, is_valid_tool := range right_tool[next_region_type] {
+				// fmt.Println(new_tool, is_valid_tool)
+				if is_valid_tool && new_tool != tool && right_tool[current_region_type][new_tool] {
+					new_minutes := minutes + 7 + 1
+
+					current_distance, is_seen := distances[Coord{new_x, new_y}]
+					if !is_seen {
+						current_distance = math.MaxInt
+					}
+					if new_minutes < current_distance {
+						item := &Item{
+							value:    State{new_x, new_y, new_tool, next_region_type},
+							priority: new_minutes,
+						}
+						heap.Push(&pq, item)
+						distances[Coord{new_x, new_y}] = new_minutes
+						visited[Coord{new_x, new_y}] = true
+					}
+				}
+			}
+		}
+		// break
+	}
+	return distances[Coord{target_x, target_y}]
 }
 
 func solution(depth, target_x, target_y int) int {
-	cave := create_cave_map(depth, target_x, target_y)
-	return solve(cave)
+	// cave := create_cave_map(depth, target_x, target_y)
+	return solve(depth, target_x, target_y)
 }
 
 func main() {
-	fmt.Println(solution(510, 10, 10)) // 114
-	// fmt.Println(solution(4080, 14, 785)) // 11843
+	fmt.Println(solution(510, 10, 10)) // 45
+	// fmt.Println(solution(4080, 14, 785)) // 1098?
 }
