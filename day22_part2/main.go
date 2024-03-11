@@ -42,6 +42,7 @@ type State struct {
 	y           int
 	tool        int
 	region_type int
+	switch_gear bool
 }
 
 // An Item is something we manage in a priority queue.
@@ -175,7 +176,7 @@ func solve(depth, target_x, target_y int) int {
 	// Dijstra init
 	pq := PriorityQueue{}
 	heap.Init(&pq)
-	heap.Push(&pq, &Item{value: State{0, 0, TORCH, ROCKY}, priority: 0})
+	heap.Push(&pq, &Item{value: State{0, 0, TORCH, ROCKY, false}, priority: 0})
 	visited := make(map[Coord]bool)
 	visited[Coord{0, 0}] = true
 
@@ -187,11 +188,12 @@ func solve(depth, target_x, target_y int) int {
 		item := heap.Pop(&pq).(*Item)
 		state := item.value
 		x, y, tool, current_region_type := state.x, state.y, state.tool, state.region_type
+		switch_gear := state.switch_gear
 		minutes := item.priority
 
-		// fmt.Println(x, y)
+		fmt.Println(x, y, minutes)
 
-		if x == target_x && y == target_y {
+		if x == target_x && y == target_y && tool == TORCH {
 			fmt.Println("arriving. tool", tool)
 			return minutes
 		}
@@ -204,12 +206,13 @@ func solve(depth, target_x, target_y int) int {
 			if new_x < 0 || new_y < 0 {
 				continue
 			}
-			// region_type, is_in_cave := cave[Coord{new_x, new_y}]
+			_, is_visited := visited[Coord{new_x, new_y}]
+			if is_visited {
+				continue
+			}
+
 			next_region_type := get_cave(depth, new_x, new_y, target_x, target_y)
-			// _, is_visited := visited[Coord{new_x, new_y}]
-			// if is_visited {
-			// 	continue
-			// }
+
 			if right_tool[next_region_type][tool] {
 				// keep same tool
 				new_minutes := minutes + 1
@@ -219,7 +222,7 @@ func solve(depth, target_x, target_y int) int {
 				}
 				if new_minutes < current_distance {
 					item := &Item{
-						value:    State{new_x, new_y, tool, next_region_type},
+						value:    State{new_x, new_y, tool, next_region_type, false},
 						priority: new_minutes,
 					}
 					heap.Push(&pq, item)
@@ -228,27 +231,24 @@ func solve(depth, target_x, target_y int) int {
 				}
 				// continue
 			}
+		}
 
-			// change tool
-			for new_tool, is_valid_tool := range right_tool[next_region_type] {
-				// fmt.Println(new_tool, is_valid_tool)
-				if is_valid_tool && new_tool != tool && right_tool[current_region_type][new_tool] {
-					new_minutes := minutes + 7 + 1
+		if switch_gear {
+			continue
+		}
 
-					current_distance, is_seen := distances[Coord{new_x, new_y}]
-					if !is_seen {
-						current_distance = math.MaxInt
-					}
-					if new_minutes < current_distance {
-						item := &Item{
-							value:    State{new_x, new_y, new_tool, next_region_type},
-							priority: new_minutes,
-						}
-						heap.Push(&pq, item)
-						distances[Coord{new_x, new_y}] = new_minutes
-						visited[Coord{new_x, new_y}] = true
-					}
+		// change tool
+		for new_tool, is_valid_tool := range right_tool[current_region_type] {
+			// fmt.Println(new_tool, is_valid_tool)
+			if is_valid_tool && new_tool != tool {
+				new_minutes := minutes + 7
+				item := &Item{
+					value:    State{x, y, new_tool, current_region_type, true},
+					priority: new_minutes,
 				}
+				heap.Push(&pq, item)
+				// distances[Coord{x, y}] = new_minutes
+				// visited[Coord{x, y}] = true
 			}
 		}
 		// break
