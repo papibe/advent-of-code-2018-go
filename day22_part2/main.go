@@ -3,12 +3,17 @@ package main
 import (
 	"container/heap"
 	"fmt"
-	"math"
 )
 
 type Coord struct {
 	x int
 	y int
+}
+
+type Seen struct {
+	x    int
+	y    int
+	tool int
 }
 
 const ROCKY = 0
@@ -42,7 +47,6 @@ type State struct {
 	y           int
 	tool        int
 	region_type int
-	switch_gear bool
 }
 
 // An Item is something we manage in a priority queue.
@@ -134,69 +138,35 @@ func get_cave(depth, x, y, target_x, target_y int) int {
 	return region_type
 }
 
-// func solve_sample(cave map[Coord]int) int {
-// 	s1 := State{0, 1, 0}
-// 	s2 := State{0, 2, 0}
-// 	s3 := State{0, 3, 0}
-
-// 	// Some items and their priorities.
-// 	items := map[State]int{
-// 		s1: 3, s2: 2, s3: 4,
-// 	}
-
-// 	// Create a priority queue, put the items in it, and
-// 	// establish the priority queue (heap) invariants.
-// 	pq := PriorityQueue{}
-// 	heap.Init(&pq)
-
-// 	i := 0
-// 	for value, priority := range items {
-// 		heap.Push(&pq, &Item{value: value, priority: priority, index: i})
-// 		i++
-// 	}
-
-// 	// Insert a new item and then modify its priority.
-// 	item := &Item{
-// 		value:    State{0, 4, 0},
-// 		priority: 1,
-// 	}
-// 	heap.Push(&pq, item)
-// 	// pq.update(item, item.value, 5)
-
-// 	// Take the items out; they arrive in decreasing priority order.
-// 	for pq.Len() > 0 {
-// 		item := heap.Pop(&pq).(*Item)
-// 		fmt.Printf("%.2d:%v\n", item.priority, item.value)
-// 	}
-
-// 	return 0
-// }
-
 func solve(depth, target_x, target_y int) int {
 	// Dijstra init
 	pq := PriorityQueue{}
 	heap.Init(&pq)
-	heap.Push(&pq, &Item{value: State{0, 0, TORCH, ROCKY, false}, priority: 0})
+	heap.Push(&pq, &Item{value: State{0, 0, TORCH, ROCKY}, priority: 0})
 	visited := make(map[Coord]bool)
 	visited[Coord{0, 0}] = true
 
 	distances := make(map[Coord]int)
 	distances[Coord{0, 0}] = 0
 
+	seen := make(map[Seen]bool)
+
 	// BFS Dijstra
 	for pq.Len() > 0 {
 		item := heap.Pop(&pq).(*Item)
 		state := item.value
 		x, y, tool, current_region_type := state.x, state.y, state.tool, state.region_type
-		switch_gear := state.switch_gear
 		minutes := item.priority
 
-		fmt.Println(x, y, minutes)
-
 		if x == target_x && y == target_y && tool == TORCH {
-			fmt.Println("arriving. tool", tool)
 			return minutes
 		}
+
+		_, is_seen := seen[Seen{x, y, tool}]
+		if is_seen {
+			continue
+		}
+		seen[Seen{x, y, tool}] = true
 
 		steps := [][]int{{1, 0}, {-1, 0}, {0, 1}, {0, -1}}
 		for _, step := range steps {
@@ -206,62 +176,40 @@ func solve(depth, target_x, target_y int) int {
 			if new_x < 0 || new_y < 0 {
 				continue
 			}
-			_, is_visited := visited[Coord{new_x, new_y}]
-			if is_visited {
-				continue
-			}
 
 			next_region_type := get_cave(depth, new_x, new_y, target_x, target_y)
 
 			if right_tool[next_region_type][tool] {
 				// keep same tool
 				new_minutes := minutes + 1
-				current_distance, is_seen := distances[Coord{new_x, new_y}]
-				if !is_seen {
-					current_distance = math.MaxInt
-				}
-				if new_minutes < current_distance {
-					item := &Item{
-						value:    State{new_x, new_y, tool, next_region_type, false},
-						priority: new_minutes,
-					}
-					heap.Push(&pq, item)
-					distances[Coord{new_x, new_y}] = new_minutes
-					visited[Coord{new_x, new_y}] = true
-				}
-				// continue
-			}
-		}
-
-		if switch_gear {
-			continue
-		}
-
-		// change tool
-		for new_tool, is_valid_tool := range right_tool[current_region_type] {
-			// fmt.Println(new_tool, is_valid_tool)
-			if is_valid_tool && new_tool != tool {
-				new_minutes := minutes + 7
 				item := &Item{
-					value:    State{x, y, new_tool, current_region_type, true},
+					value:    State{new_x, new_y, tool, next_region_type},
 					priority: new_minutes,
 				}
 				heap.Push(&pq, item)
-				// distances[Coord{x, y}] = new_minutes
-				// visited[Coord{x, y}] = true
 			}
 		}
-		// break
+		// change tool
+		for new_tool, is_valid_tool := range right_tool[current_region_type] {
+			if is_valid_tool && new_tool != tool {
+				new_minutes := minutes + 7
+				item := &Item{
+					value:    State{x, y, new_tool, current_region_type},
+					priority: new_minutes,
+				}
+				heap.Push(&pq, item)
+			}
+		}
 	}
-	return distances[Coord{target_x, target_y}]
+	return -1
 }
 
 func solution(depth, target_x, target_y int) int {
-	// cave := create_cave_map(depth, target_x, target_y)
+	clear(memo)
 	return solve(depth, target_x, target_y)
 }
 
 func main() {
-	fmt.Println(solution(510, 10, 10)) // 45
-	// fmt.Println(solution(4080, 14, 785)) // 1098?
+	fmt.Println(solution(510, 10, 10))   // 45
+	fmt.Println(solution(4080, 14, 785)) // 1078
 }
