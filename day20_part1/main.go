@@ -58,7 +58,6 @@ func draw(doors map[Coord]rune, rooms, walls map[Coord]bool) string {
 	for row := min_row; row <= max_row; row++ {
 		for col := min_col; col <= max_col; col++ {
 			if row == 0 && col == 0 {
-				// fmt.Print("X")
 				output = append(output, "X")
 				continue
 			}
@@ -66,22 +65,17 @@ func draw(doors map[Coord]rune, rooms, walls map[Coord]bool) string {
 			door, is_door := doors[Coord{row, col}]
 			_, is_wall := walls[Coord{row, col}]
 			if is_room {
-				// fmt.Print(".")
 				output = append(output, ".")
 			} else if is_door {
-				// fmt.Print(string(door))
 				output = append(output, string(door))
 
 			} else if is_wall {
-				// fmt.Print("#")
 				output = append(output, "#")
 			} else {
 				walls[Coord{row, col}] = true
-				// fmt.Print("#")
 				output = append(output, "#")
 			}
 		}
-		// fmt.Println()
 		output = append(output, "\n")
 	}
 	return strings.Join(output, "")
@@ -96,10 +90,8 @@ func read_regex(regex string, index, row, col int) (map[Coord]rune, map[Coord]bo
 
 outer:
 	for {
-		// fmt.Print("current ", row, col, " ")
 		switch regex[index] {
 		case '^':
-			// fmt.Println("saving", row, col)
 			stack = append(stack, Coord{row, col})
 		case '$':
 			_ = stack[len(stack)-1]
@@ -109,7 +101,6 @@ outer:
 			}
 			break outer
 		case 'N':
-			// fmt.Println("N")
 			rooms[Coord{row, col}] = true         // current room
 			rooms[Coord{row - 2, col}] = true     // next room
 			doors[Coord{row - 1, col}] = '-'      // pass through door
@@ -117,7 +108,6 @@ outer:
 			walls[Coord{row - 1, col + 1}] = true // wall sustain door
 			row -= 2
 		case 'E':
-			// fmt.Println("E")
 			rooms[Coord{row, col}] = true         // current room
 			rooms[Coord{row, col + 2}] = true     // next room
 			doors[Coord{row, col + 1}] = '|'      // pas through door
@@ -125,7 +115,6 @@ outer:
 			walls[Coord{row + 1, col + 1}] = true // wall sustain door
 			col += 2
 		case 'S':
-			// fmt.Println("S")
 			rooms[Coord{row, col}] = true         // current room
 			rooms[Coord{row + 2, col}] = true     // next room
 			doors[Coord{row + 1, col}] = '-'      // pass through door
@@ -134,7 +123,6 @@ outer:
 			row += 2
 
 		case 'W':
-			// fmt.Println("W")
 			rooms[Coord{row, col}] = true         // current room
 			rooms[Coord{row, col - 2}] = true     // next room
 			doors[Coord{row, col - 1}] = '|'      // pas through door
@@ -143,21 +131,14 @@ outer:
 			col -= 2
 
 		case '(':
-			// break outer
-			// fmt.Println("( saving", row, col)
 			stack = append(stack, Coord{row, col})
 		case ')':
-			// check if prev == '|'
 			coord := stack[len(stack)-1]
 			stack = stack[:len(stack)-1]
 			row, col = coord.row, coord.col
-			// fmt.Println(") popping", row, col)
 		case '|':
 			coord := stack[len(stack)-1]
-			// stack = stack[:len(stack)-1]
 			row, col = coord.row, coord.col
-			// fmt.Println("| gettop", row, col)
-
 		}
 		index += 1
 	}
@@ -214,19 +195,9 @@ func get_max_distance(doors map[Coord]rune, rooms, walls map[Coord]bool) int {
 func solution(filename string) int {
 	regex := parse(filename)
 	doors, rooms, walls := read_regex(regex, 0, 0, 0)
-	// draw(doors, rooms, walls)
 	return get_max_distance(doors, rooms, walls)
 }
 
 func main() {
-	fmt.Println(solution("example1.txt")) // 3
-	fmt.Println(solution("example2.txt")) // 10
-	fmt.Println(solution("example3.txt")) // 18
-	fmt.Println(solution("example4.txt")) // 23
-	fmt.Println(solution("example5.txt")) // 31
-
 	fmt.Println(solution("input.txt")) //
-
-	// TODO
-	// - make tests for all examples
 }
