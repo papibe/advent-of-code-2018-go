@@ -87,30 +87,25 @@ func distance(point Coord, nanobot Nanobot) int {
 	return int(d)
 }
 
+func ndistance(nb1, nb2 Nanobot) int {
+	d := math.Abs(float64(nb1.x)-float64(nb2.x)) + math.Abs(float64(nb1.y)-float64(nb2.y)) + math.Abs(float64(nb1.z)-float64(nb2.z))
+
+	return int(d)
+}
+
 func solve(nanobots []Nanobot) int {
 	var best_coord = Coord{0, 0, 0}
 	// max_num_nanobots := math.MinInt
 
-	for _, inner_nanobot := range nanobots {
-		fmt.Println(inner_nanobot.radius)
-		points := get_points_inside(inner_nanobot)
-		fmt.Println(inner_nanobot, len(points))
-
-		// for point, _ := range points {
-		// 	current_intersections := 0
-		// 	for _, outter_nanobot := range nanobots {
-		// 		if distance(point, outter_nanobot) <= outter_nanobot.radius {
-		// 			current_intersections += 1
-		// 		}
-		// 	}
-		// 	if current_intersections > max_num_nanobots {
-		// 		max_num_nanobots = current_intersections
-		// 		best_coord = point
-		// 	}
-		// }
-
+	counter := 0
+	for i := 0; i < len(nanobots); i++ {
+		for j := i + 1; j < len(nanobots); j++ {
+			if ndistance(nanobots[i], nanobots[j]) < nanobots[i].radius+nanobots[j].radius {
+				counter += 1
+			}
+		}
 	}
-	fmt.Println(best_coord)
+	fmt.Println("counter", counter)
 
 	d := math.Abs(float64(0)-float64(best_coord.x)) + math.Abs(float64(0)-float64(best_coord.y)) + math.Abs(float64(0)-float64(best_coord.z))
 	return int(d)
@@ -123,6 +118,6 @@ func solution(filename string) int {
 }
 
 func main() {
-	// fmt.Println(solution("./example.txt")) // 36
-	fmt.Println(solution("./input.txt")) //
+	fmt.Println(solution("./example.txt")) //
+	fmt.Println(solution("./input.txt"))   //
 }
