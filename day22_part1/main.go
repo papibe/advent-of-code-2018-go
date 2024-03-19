@@ -41,6 +41,7 @@ func erosion_level(gindex, depth int) int {
 }
 
 func solution(depth, target_x, target_y int) int {
+	clear(memo)
 	region := []int{0, 0, 0}
 	for x := 0; x <= target_x; x++ {
 		for y := 0; y <= target_y; y++ {
